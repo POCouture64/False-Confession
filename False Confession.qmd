@@ -1,0 +1,256 @@
+---
+title: "False Confession"
+author: "PO Couture"
+format: html
+editor: visual
+---
+
+## False Confession Code
+
+This is all the code I will use to analyze the 2024 data and compare it to the 
+2017 data.
+
+```{r}
+#| label: Loading the Data and Packages
+
+library(readr)
+
+
+FC_SMU_Students <- read_csv("FC SMU Students.csv")
+View(FC_SMU_Students)
+
+### Removing all the columns and rows with information that I don't need
+# Remove the first 7 columns
+FC_SMU_Students_cols_removed <- FC_SMU_Students[, -c(1:8)]
+
+# Now, from this new data frame (with columns removed), remove the first 2 rows
+FC_SMU_Students_final <- FC_SMU_Students_cols_removed[-c(1:2), ]
+
+# Remove columns 2 through 15
+FC_SMU_Students_final <- FC_SMU_Students_final[, -c(2:15)]
+
+FC_SMU_Students <- FC_SMU_Students_final
+
+```
+
+You can add options to executable code like this
+
+```{r}
+#| label: Kassin Student Data
+
+# R Script to create a table of means and standard deviations 
+# for Kassin et al. (2018) questions from FC_SMU_Students dataset
+
+# Load required packages
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(tidyr)
+# Check for additional packages for table formatting
+if(!require(flextable)) {
+  install.packages("flextable")
+  library(flextable)
+}
+if(!require(officer)) {
+  install.packages("officer")
+  library(officer)
+}
+
+# Load the dataset - replace with your file path if necessary
+# If you have the data in a CSV file:
+# FC_SMU_Students <- read.csv("path_to_your_file.csv")
+
+# Function to extract numeric values from responses
+# This will handle cases where responses might include text like "1 (Do not agree at all)"
+extract_numeric <- function(x) {
+  # If x is already numeric, return as is
+  if(is.numeric(x)) return(x)
+  
+  # If x is a factor or character, extract the first number using regex
+  if(is.factor(x) || is.character(x)) {
+    # Extract the first number from the string
+    nums <- as.numeric(gsub("([0-9]+).*", "\\1", x))
+    return(nums)
+  }
+  
+  # Return NA if none of the above
+  return(NA)
+}
+
+# Create vectors to store the question text - you'll need to replace these with your actual question texts
+# These are based on what I see in your example tables
+kassin_statements <- c(
+  "The average person can differentiate between when someone is telling the truth or lying.",
+  "Compared to most adults, adolescents exhibit \"immaturity of judgement\" in their decision-making.",
+  "If police present a suspect with false evidence during an interrogation, it is more likely that the suspect will confess to a crime they did not commit.",
+  "Compared to guilty suspects, innocent suspects are more likely to waive their Charter rights.",
+  "In general, people's behaviour is strongly influenced by their expectations of reward and punishment.",
+  "Trained police can distinguish between truths and lies at high levels of accuracy.",
+  "Sleep deprivation affects decision making and makes a suspect vulnerable to influence.",
+  "Explicit promises of leniency or immunity during interrogation can lead a person to confess to a crime that they did not commit.",
+  "Police officer expressions of sympathy and moral justification for a crime can lead a suspect to believe that the police will be lenient with them when they confess to a crime.",
+  "In decision making, people are influenced more by immediate outcomes than by longer term consequences.",
+  "Misinformation about an event can change a person's memory for that event.",
+  "Individuals who have intellectual disabilities are particularly vulnerable to the pressures of police.",
+  "Observers tend to underestimate the effects of situational factors on the behaviour of other people.",
+  "An average adult cannot be induced into giving a false confession.",
+  "Individuals with compliant or suggestible personalities are particularly vulnerable to influence during an interrogation.",
+  "Compared to adults, adolescents are more likely to give false confessions.",
+  "Authority figures can produce illicit acts of obedience from people through a step-by-step process of gradual escalation.",
+  "People can be trained to distinguish between truths and lies at high levels of accuracy by observing nonverbal symptoms of anxiety.",
+  "People can be trained to distinguish between truths and lies at high levels of accuracy by learning how to detect micro-expressions in the face."
+)
+
+# Add the additional statements that are in your second block of questions (Q2_1 to Q2_19)
+# If the questions are exactly the same, you can just use the same vector
+
+# Calculate means and SDs for Q1_1 to Q1_19
+q1_results <- data.frame(
+  Question = paste0("Q1_", 1:19),
+  Statement = kassin_statements
+)
+
+# Placeholder for Q1 calculations
+for(i in 1:19) {
+  col_name <- paste0("Q1_", i)
+  if(col_name %in% colnames(FC_SMU_Students)) {
+    # Extract numeric values and remove NAs for calculations
+    numeric_values <- extract_numeric(FC_SMU_Students[[col_name]])
+    numeric_values <- numeric_values[!is.na(numeric_values)]
+    
+    # Only calculate if we have valid numeric values
+    if(length(numeric_values) > 0) {
+      q1_results$Mean[i] <- round(mean(numeric_values, na.rm = TRUE), 2)
+      q1_results$SD[i] <- round(sd(numeric_values, na.rm = TRUE), 2)
+      q1_results$N[i] <- length(numeric_values)
+    } else {
+      q1_results$Mean[i] <- NA
+      q1_results$SD[i] <- NA
+      q1_results$N[i] <- 0
+    }
+  } else {
+    q1_results$Mean[i] <- NA
+    q1_results$SD[i] <- NA
+    q1_results$N[i] <- NA
+  }
+}
+
+# Calculate means and SDs for Q2_1 to Q2_19
+q2_results <- data.frame(
+  Question = paste0("Q2_", 1:19),
+  Statement = kassin_statements  # Assuming the statements are the same
+)
+
+# Placeholder for Q2 calculations
+for(i in 1:19) {
+  col_name <- paste0("Q2_", i)
+  if(col_name %in% colnames(FC_SMU_Students)) {
+    # Extract numeric values and remove NAs for calculations
+    numeric_values <- extract_numeric(FC_SMU_Students[[col_name]])
+    numeric_values <- numeric_values[!is.na(numeric_values)]
+    
+    # Only calculate if we have valid numeric values
+    if(length(numeric_values) > 0) {
+      q2_results$Mean[i] <- round(mean(numeric_values, na.rm = TRUE), 2)
+      q2_results$SD[i] <- round(sd(numeric_values, na.rm = TRUE), 2)
+      q2_results$N[i] <- length(numeric_values)
+    } else {
+      q2_results$Mean[i] <- NA
+      q2_results$SD[i] <- NA
+      q2_results$N[i] <- 0
+    }
+  } else {
+    q2_results$Mean[i] <- NA
+    q2_results$SD[i] <- NA
+    q2_results$N[i] <- NA
+  }
+}
+
+# Combine both tables if needed
+all_results <- rbind(q1_results, q2_results)
+
+# Add a note about the scale to the table output
+scale_note <- "Scale: 1 = Do not agree at all; 7 = Completely agree"
+
+# Create an APA-style table using flextable (more reliable than papaja for installation)
+if(require(flextable) && require(officer)) {
+  # Format data for APA table
+  apa_table_data <- all_results %>%
+    select(Statement, Mean, SD, N)
+  
+  # Create flextable with APA styling
+  ft <- flextable(apa_table_data) %>%
+    set_header_labels(
+      Statement = "Statement",
+      Mean = "M",
+      SD = "SD",
+      N = "n"
+    ) %>%
+    italic(j = c("Mean", "SD", "N"), part = "header") %>%
+    align(j = 1, align = "left", part = "all") %>%
+    align(j = 2:4, align = "right", part = "all") %>%
+    add_footer_lines(scale_note) %>%
+    set_caption("Table 1. Means and Standard Deviations for Kassin Statements") %>%
+    font(fontname = "Times New Roman", part = "all") %>%
+    fontsize(size = 12, part = "all") %>%
+    line_spacing(space = 1.5) %>%
+    border_remove() %>%
+    hline_top(part = "header", border = fp_border(width = 0.5)) %>%
+    hline_bottom(part = "header", border = fp_border(width = 0.5)) %>%
+    hline_bottom(part = "body", border = fp_border(width = 0.5)) %>%
+    padding(padding = 5, part = "all") %>%
+    autofit()
+  
+  # Print the table to console
+  print(ft)
+  
+  # Save as Word document
+save_as_docx(ft, path = "kassin_apa_table.docx")
+}
+print(kable(q1_results[, c("Statement", "Mean", "SD", "N")], 
+            format = "simple",
+            caption = "Means and Standard Deviations for First Set of Kassin Statements"))
+
+cat("\n\n")
+
+print(kable(q2_results[, c("Statement", "Mean", "SD", "N")], 
+            format = "simple",
+            caption = "Means and Standard Deviations for Second Set of Kassin Statements"))
+
+# Alternative approach: Create a formatted table using kable and kableExtra with APA styling
+cat("\nTable: Means and Standard Deviations for Kassin Statements\n")
+cat(scale_note, "\n\n")
+
+if(require(kableExtra)) {
+  # Create an APA-styled table with kableExtra
+  apa_styled_table <- kable(all_results[, c("Statement", "Mean", "SD", "N")], 
+                         format = "html",
+                         caption = "Table 1. Means and Standard Deviations for Kassin Statements",
+                         col.names = c("Statement", "*M*", "*SD*", "*n*"),
+                         align = c("l", "r", "r", "r")) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"),
+                  full_width = FALSE) %>%
+    row_spec(0, bold = TRUE) %>%
+    footnote(general = scale_note,
+             general_title = "",
+             footnote_as_chunk = TRUE,
+             escape = FALSE) %>%
+    add_header_above(c(" " = 1, "Statistics" = 3))
+  
+  # Save the table as an HTML file that could be imported into Word
+  # write_file <- function(x) {cat(x, file = "kassin_apa_styled_table.html")}
+  # write_file(as.character(apa_styled_table))
+  
+  # Print the table
+  print(apa_styled_table)
+}
+
+# For use with APA articles, here's how to create a CSV that can be imported into Word
+# write.csv(all_results[, c("Statement", "Mean", "SD", "N")], "kassin_results.csv", row.names = FALSE)
+
+# If you want to recreate exactly the format from your example tables,
+# you could add columns for the Kassin et al. (2018) corresponding statements
+# and the Common Sense percentages if you have that data available
+```
+
+The `echo: false` option disables the printing of code (only output is displayed).
