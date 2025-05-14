@@ -56,12 +56,9 @@ if(!require(officer)) {
   library(officer)
 }
 
-# Load the dataset - replace with your file path if necessary
-# If you have the data in a CSV file:
-# FC_SMU_Students <- read.csv("path_to_your_file.csv")
-
 # Function to extract numeric values from responses
 # This will handle cases where responses might include text like "1 (Do not agree at all)"
+
 extract_numeric <- function(x) {
   # If x is already numeric, return as is
   if(is.numeric(x)) return(x)
@@ -238,19 +235,416 @@ if(require(kableExtra)) {
     add_header_above(c(" " = 1, "Statistics" = 3))
   
   # Save the table as an HTML file that could be imported into Word
-  # write_file <- function(x) {cat(x, file = "kassin_apa_styled_table.html")}
-  # write_file(as.character(apa_styled_table))
+write_file <- function(x) {cat(x, file = "Leo_&_Liu_apa_styled_table.html")}
+write_file(as.character(apa_styled_table))
   
   # Print the table
   print(apa_styled_table)
 }
 
 # For use with APA articles, here's how to create a CSV that can be imported into Word
-# write.csv(all_results[, c("Statement", "Mean", "SD", "N")], "kassin_results.csv", row.names = FALSE)
+write.csv(all_results[, c("Statement", "Mean", "SD", "N")], "Leo_&_Liu_results.csv", row.names = FALSE)
 
 # If you want to recreate exactly the format from your example tables,
 # you could add columns for the Kassin et al. (2018) corresponding statements
 # and the Common Sense percentages if you have that data available
 ```
+
+```{r}
+#| label: Leo & Liu Student Data
+
+# R Script to create APA-formatted tables for Leo's Interrogation Tactics data
+# from FC_SMU_Students dataset (Q3 - Coerciveness, Q4 - True Confession, Q5 - False Confession)
+
+# Load required packages
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(tidyr)
+# Check for additional packages for table formatting
+if(!require(flextable)) {
+  install.packages("flextable")
+  library(flextable)
+}
+if(!require(officer)) {
+  install.packages("officer")
+  library(officer)
+}
+
+# Load the dataset - replace with your file path if necessary
+# If your data is in a CSV file:
+# FC_SMU_Students <- read.csv("path_to_your_file.csv")
+
+# Function to extract numeric values from responses
+# This will handle cases where responses might include text like "1 (Not at all coercive)"
+extract_numeric <- function(x) {
+  # If x is already numeric, return as is
+  if(is.numeric(x)) return(x)
+  
+  # If x is a factor or character, extract the first number using regex
+  if(is.factor(x) || is.character(x)) {
+    # Extract the first number from the string
+    nums <- as.numeric(gsub("([0-9]+).*", "\\1", x))
+    return(nums)
+  }
+  
+  # Return NA if none of the above
+  return(NA)
+}
+
+# Create empty data frames to store results for each question set
+coerciveness_results <- data.frame(
+  Question = paste0("Q3 - Coerciveness_", 1:18),
+  Statement = rep(NA, 18),
+  Mean = rep(NA, 18),
+  SD = rep(NA, 18),
+  N = rep(NA, 18)
+)
+
+true_confession_results <- data.frame(
+  Question = paste0("Q4 - True Confession_", 1:18),
+  Statement = rep(NA, 18),
+  Mean = rep(NA, 18),
+  SD = rep(NA, 18),
+  N = rep(NA, 18)
+)
+
+false_confession_results <- data.frame(
+  Question = paste0("Q5 False Confess._", 1:18),
+  Statement = rep(NA, 18),
+  Mean = rep(NA, 18),
+  SD = rep(NA, 18),
+  N = rep(NA, 18)
+)
+
+# Updated statements based on Leo's actual interrogation tactics
+leo_liu_statements <- c(
+  "Repeatedly accusing a suspect.",
+  "Asking the suspect to take a lie detector test.",
+  "Repeatedly telling the suspect his or her alibi is false.",
+  "Repeatedly cutting off suspect's denial of guilt.",
+  "Giving a lie detector test and truthfully telling suspect results are inconclusive.",
+  "Giving a lie detector test and truthfully telling suspect results show he or she is lying.",
+  "Confronting suspect with incriminating false surveillance camera evidence.",
+  "Confronting suspect with incriminating false DNA evidence.",
+  "Confronting suspect with incriminating false fingerprint evidence.",
+  "Giving a lie detector test and falsely telling suspect results show he or she is lying.",
+  "Implicitly suggesting suspect will receive a lenient charge for confession.",
+  "Explicitly promising suspect a lenient charge for confession.",
+  "Implicitly suggesting suspect will receive a lenient sentence for confession.",
+  "Explicitly promising a suspect a lenient sentence for confession.",
+  "Implicitly threatening the suspect with physical harm if no confession.",
+  "Explicitly threatening the suspect with physical harm if no confession.",
+  "Threatening the suspect with violence if no confession.",
+  "Beating or assaulting the suspect."
+)
+
+# Calculate means and SDs for Q3 - Coerciveness
+for(i in 1:18) {
+  # Create column name as it appears in the dataset
+  col_name <- paste0("Q3 - Coerciveness_", i)
+  
+  # Set statement text
+  coerciveness_results$Statement[i] <- leo_liu_statements[i]
+  
+  # Check if column exists in dataset
+  if(col_name %in% colnames(FC_SMU_Students)) {
+    # Extract numeric values and remove NAs for calculations
+    numeric_values <- extract_numeric(FC_SMU_Students[[col_name]])
+    numeric_values <- numeric_values[!is.na(numeric_values)]
+    
+    # Only calculate if we have valid numeric values
+    if(length(numeric_values) > 0) {
+      coerciveness_results$Mean[i] <- round(mean(numeric_values, na.rm = TRUE), 2)
+      coerciveness_results$SD[i] <- round(sd(numeric_values, na.rm = TRUE), 2)
+      coerciveness_results$N[i] <- length(numeric_values)
+    } else {
+      coerciveness_results$Mean[i] <- NA
+      coerciveness_results$SD[i] <- NA
+      coerciveness_results$N[i] <- 0
+    }
+  }
+}
+
+# Calculate means and SDs for Q4 - True Confession
+for(i in 1:18) {
+  # Create column name as it appears in the dataset
+  col_name <- paste0("Q4 - True Confession_", i)
+  
+  # Set statement text
+  true_confession_results$Statement[i] <- leo_liu_statements[i]
+  
+  # Check if column exists in dataset
+  if(col_name %in% colnames(FC_SMU_Students)) {
+    # Extract numeric values and remove NAs for calculations
+    numeric_values <- extract_numeric(FC_SMU_Students[[col_name]])
+    numeric_values <- numeric_values[!is.na(numeric_values)]
+    
+    # Only calculate if we have valid numeric values
+    if(length(numeric_values) > 0) {
+      true_confession_results$Mean[i] <- round(mean(numeric_values, na.rm = TRUE), 2)
+      true_confession_results$SD[i] <- round(sd(numeric_values, na.rm = TRUE), 2)
+      true_confession_results$N[i] <- length(numeric_values)
+    } else {
+      true_confession_results$Mean[i] <- NA
+      true_confession_results$SD[i] <- NA
+      true_confession_results$N[i] <- 0
+    }
+  }
+}
+
+# Calculate means and SDs for Q5 - False Confession
+for(i in 1:18) {
+  # Create column name as it appears in the dataset
+  col_name <- paste0("Q5 False Confess._", i)
+  
+  # Set statement text
+  false_confession_results$Statement[i] <- leo_liu_statements[i]
+  
+  # Check if column exists in dataset
+  if(col_name %in% colnames(FC_SMU_Students)) {
+    # Extract numeric values and remove NAs for calculations
+    numeric_values <- extract_numeric(FC_SMU_Students[[col_name]])
+    numeric_values <- numeric_values[!is.na(numeric_values)]
+    
+    # Only calculate if we have valid numeric values
+    if(length(numeric_values) > 0) {
+      false_confession_results$Mean[i] <- round(mean(numeric_values, na.rm = TRUE), 2)
+      false_confession_results$SD[i] <- round(sd(numeric_values, na.rm = TRUE), 2)
+      false_confession_results$N[i] <- length(numeric_values)
+    } else {
+      false_confession_results$Mean[i] <- NA
+      false_confession_results$SD[i] <- NA
+      false_confession_results$N[i] <- 0
+    }
+  }
+}
+
+# Combine all results for potential combined table
+all_leo_liu_results <- rbind(
+  coerciveness_results,
+  true_confession_results,
+  false_confession_results
+)
+
+# Add category column to distinguish between the three question types
+all_leo_liu_results$Category <- c(
+  rep("Coerciveness", 18),
+  rep("True Confession", 18),
+  rep("False Confession", 18)
+)
+
+# Create an alternate version that groups by statement rather than by category
+# This format may be more useful for comparisons between categories
+grouped_by_statement <- data.frame(
+  Statement = leo_liu_statements,
+  Coerciveness_Mean = coerciveness_results$Mean,
+  Coerciveness_SD = coerciveness_results$SD,
+  True_Confession_Mean = true_confession_results$Mean,
+  True_Confession_SD = true_confession_results$SD,
+  False_Confession_Mean = false_confession_results$Mean,
+  False_Confession_SD = false_confession_results$SD
+)
+
+# Updated scale notes based on the table you provided
+coerciveness_scale_note <- "Scale: 1 = Not coercive at all; 5 = Extremely coercive"
+true_confession_scale_note <- "Scale: 1 = Not at all likely; 5 = Extremely likely"
+false_confession_scale_note <- "Scale: 1 = Not at all likely; 5 = Extremely likely"
+
+# Create APA-style tables using flextable
+
+# Table 1: Coerciveness
+if(require(flextable)) {
+  # Format data for APA table
+  coerciveness_table_data <- coerciveness_results %>%
+    select(Statement, Mean, SD, N)
+  
+  # Create flextable with APA styling
+  coerciveness_ft <- flextable(coerciveness_table_data) %>%
+    set_header_labels(
+      Statement = "Interrogation Tactic",
+      Mean = "M",
+      SD = "SD",
+      N = "n"
+    ) %>%
+    italic(j = c("Mean", "SD", "N"), part = "header") %>%
+    align(j = 1, align = "left", part = "all") %>%
+    align(j = 2:4, align = "right", part = "all") %>%
+    add_footer_lines(coerciveness_scale_note) %>%
+    set_caption("Table 1. Perceived Coerciveness of Interrogation Tactics") %>%
+    font(fontname = "Times New Roman", part = "all") %>%
+    fontsize(size = 12, part = "all") %>%
+    line_spacing(space = 1.5) %>%
+    border_remove() %>%
+    hline_top(part = "header", border = fp_border(width = 0.5)) %>%
+    hline_bottom(part = "header", border = fp_border(width = 0.5)) %>%
+    hline_bottom(part = "body", border = fp_border(width = 0.5)) %>%
+    padding(padding = 5, part = "all") %>%
+    autofit()
+  
+  # Print the table to console
+  print(coerciveness_ft)
+  
+  # Save as Word document
+  save_as_docx(coerciveness_ft, path = "coerciveness_apa_table.docx")
+}
+
+# Table 2: True Confession
+if(require(flextable)) {
+  # Format data for APA table
+  true_confession_table_data <- true_confession_results %>%
+    select(Statement, Mean, SD, N)
+  
+  # Create flextable with APA styling
+  true_confession_ft <- flextable(true_confession_table_data) %>%
+    set_header_labels(
+      Statement = "Interrogation Tactic",
+      Mean = "M",
+      SD = "SD",
+      N = "n"
+    ) %>%
+    italic(j = c("Mean", "SD", "N"), part = "header") %>%
+    align(j = 1, align = "left", part = "all") %>%
+    align(j = 2:4, align = "right", part = "all") %>%
+    add_footer_lines(true_confession_scale_note) %>%
+    set_caption("Table 2. Perceived Likelihood of Techniques Leading to True Confessions") %>%
+    font(fontname = "Times New Roman", part = "all") %>%
+    fontsize(size = 12, part = "all") %>%
+    line_spacing(space = 1.5) %>%
+    border_remove() %>%
+    hline_top(part = "header", border = fp_border(width = 0.5)) %>%
+    hline_bottom(part = "header", border = fp_border(width = 0.5)) %>%
+    hline_bottom(part = "body", border = fp_border(width = 0.5)) %>%
+    padding(padding = 5, part = "all") %>%
+    autofit()
+  
+  # Print the table to console
+  print(true_confession_ft)
+  
+  # Save as Word document
+  save_as_docx(true_confession_ft, path = "true_confession_apa_table.docx")
+}
+
+# Table 3: False Confession
+if(require(flextable)) {
+  # Format data for APA table
+  false_confession_table_data <- false_confession_results %>%
+    select(Statement, Mean, SD, N)
+  
+  # Create flextable with APA styling
+  false_confession_ft <- flextable(false_confession_table_data) %>%
+    set_header_labels(
+      Statement = "Interrogation Tactic",
+      Mean = "M",
+      SD = "SD",
+      N = "n"
+    ) %>%
+    italic(j = c("Mean", "SD", "N"), part = "header") %>%
+    align(j = 1, align = "left", part = "all") %>%
+    align(j = 2:4, align = "right", part = "all") %>%
+    add_footer_lines(false_confession_scale_note) %>%
+    set_caption("Table 3. Perceived Likelihood of Techniques Leading to False Confessions") %>%
+    font(fontname = "Times New Roman", part = "all") %>%
+    fontsize(size = 12, part = "all") %>%
+    line_spacing(space = 1.5) %>%
+    border_remove() %>%
+    hline_top(part = "header", border = fp_border(width = 0.5)) %>%
+    hline_bottom(part = "header", border = fp_border(width = 0.5)) %>%
+    hline_bottom(part = "body", border = fp_border(width = 0.5)) %>%
+    padding(padding = 5, part = "all") %>%
+    autofit()
+  
+  # Print the table to console
+  print(false_confession_ft)
+  
+  # Save as Word document
+  save_as_docx(false_confession_ft, path = "false_confession_apa_table.docx")
+}
+
+# Table 4: Combined comparison table (similar to Leo's table format)
+if(require(flextable)) {
+  # Format data for combined table matching Leo's format
+  leo_table_data <- data.frame(
+    Tactic = leo_liu_statements,
+    Coerciveness = paste0(coerciveness_results$Mean, "(", coerciveness_results$SD, ")"),
+    TrueConfession = paste0(true_confession_results$Mean, "(", true_confession_results$SD, ")"),
+    FalseConfession = paste0(false_confession_results$Mean, "(", false_confession_results$SD, ")")
+  )
+  
+  # Create flextable with APA styling
+  leo_ft <- flextable(leo_table_data) %>%
+    set_header_labels(
+      Tactic = "Interrogation Tactic",
+      Coerciveness = "Coerciveness",
+      TrueConfession = "Likelihood of Eliciting a True Confession",
+      FalseConfession = "Likelihood of Eliciting a False Confession"
+    ) %>%
+    add_header_row(
+      values = c("", "Mean(SD)", "Mean(SD)", "Mean(SD)"),
+      colwidths = c(1, 1, 1, 1)
+    ) %>%
+    align(j = 1, align = "left", part = "all") %>%
+    align(j = 2:4, align = "center", part = "all") %>%
+    add_footer_lines(c(
+      coerciveness_scale_note,
+      true_confession_scale_note,
+      false_confession_scale_note
+    )) %>%
+    set_caption("Table X. Mean scores and standard deviations for interrogation tactics on the coerciveness and likelihood of a true or false confession") %>%
+    font(fontname = "Times New Roman", part = "all") %>%
+    fontsize(size = 12, part = "all") %>%
+    line_spacing(space = 1.5) %>%
+    border_remove() %>%
+    border(i = 1:18, border.top = fp_border(width = 0.5), border.bottom = fp_border(width = 0.5), part = "body") %>%
+    hline_top(part = "header", border = fp_border(width = 0.5)) %>%
+    hline_bottom(part = "header", border = fp_border(width = 0.5)) %>%
+    padding(padding = 5, part = "all") %>%
+    autofit()
+  
+  # Add superscript notation for scale references
+  leo_ft <- leo_ft %>%
+    compose(
+      i = 1, j = 2,
+      value = as_paragraph(leo_table_data$Coerciveness[1], as_sup("a"))
+    ) %>%
+    compose(
+      i = 1, j = 3,
+      value = as_paragraph(leo_table_data$TrueConfession[1], as_sup("b"))
+    ) %>%
+    compose(
+      i = 1, j = 4,
+      value = as_paragraph(leo_table_data$FalseConfession[1], as_sup("c"))
+    )
+  
+  # Print the table to console
+  print(leo_ft)
+  
+  # Save as Word document
+  save_as_docx(leo_ft, path = "leo_interrogation_tactics_table.docx")
+}
+
+# Save all tables to a single Word document
+if(require(flextable) && require(officer)) {
+  # Create Word document with all tables
+   doc <- read_docx()
+   doc <- body_add_flextable(doc, coerciveness_ft)
+   doc <- body_add_break(doc)
+   doc <- body_add_flextable(doc, true_confession_ft)
+   doc <- body_add_break(doc)
+   doc <- body_add_flextable(doc, false_confession_ft)
+   doc <- body_add_break(doc)
+   doc <- body_add_flextable(doc, leo_ft)
+   print(doc, target = "leo_interrogation_tactics_all_tables.docx")
+}
+
+# Export results to CSV files for additional analyses
+# write.csv(coerciveness_results, "coerciveness_results.csv", row.names = FALSE)
+# write.csv(true_confession_results, "true_confession_results.csv", row.names = FALSE)
+# write.csv(false_confession_results, "false_confession_results.csv", row.names = FALSE)
+# write.csv(leo_table_data, "leo_interrogation_tactics_comparison.csv", row.names = FALSE)
+
+```
+
+
 
 The `echo: false` option disables the printing of code (only output is displayed).
