@@ -271,10 +271,6 @@ if(!require(officer)) {
   library(officer)
 }
 
-# Load the dataset - replace with your file path if necessary
-# If your data is in a CSV file:
-# FC_SMU_Students <- read.csv("path_to_your_file.csv")
-
 # Function to extract numeric values from responses
 # This will handle cases where responses might include text like "1 (Not at all coercive)"
 extract_numeric <- function(x) {
@@ -643,6 +639,428 @@ if(require(flextable) && require(officer)) {
 # write.csv(false_confession_results, "false_confession_results.csv", row.names = FALSE)
 # write.csv(leo_table_data, "leo_interrogation_tactics_comparison.csv", row.names = FALSE)
 
+```
+
+## Panel Data
+
+```{r}
+
+library(readr)
+
+
+FC_Panel_Data <- read_csv("FC Panel Data.csv")
+View(FC_Panel_Data)
+
+FC_Panel_Data <- FC_Panel_Data[-c(1:2), -c(1:19)]
+
+```
+
+```{r}
+#| label: Kassin et al., 2018 Panel Data
+
+# R Script to create a table of means and standard deviations
+# for Kassin et al. (2018) questions from FC_Panel_Data dataset
+
+# Load required packages
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(tidyr)
+# Check for additional packages for table formatting
+if(!require(flextable)) {
+  install.packages("flextable")
+  library(flextable)
+}
+if(!require(officer)) {
+  install.packages("officer")
+  library(officer)
+}
+
+# Function to extract numeric values from responses
+# This will handle cases where responses might include text like "1 (Do not agree at all)"
+
+extract_numeric <- function(x) {
+  # If x is already numeric, return as is
+  if(is.numeric(x)) return(x)
+
+  # If x is a factor or character, extract the first number using regex
+  if(is.factor(x) || is.character(x)) {
+    # Extract the first number from the string
+    nums <- as.numeric(gsub("([0-9]+).*", "\\1", x))
+    return(nums)
+  }
+
+  # Return NA if none of the above
+  return(NA)
+}
+
+# Create vectors to store the question text - you'll need to replace these with your actual question texts
+# These are based on what I see in your example tables
+kassin_statements <- c(
+  "The average person can differentiate between when someone is telling the truth or lying.",
+  "Compared to most adults, adolescents exhibit \"immaturity of judgement\" in their decision-making.",
+  "If police present a suspect with false evidence during an interrogation, it is more likely that the suspect will confess to a crime they did not commit.",
+  "Compared to guilty suspects, innocent suspects are more likely to waive their Charter rights.",
+  "In general, people's behaviour is strongly influenced by their expectations of reward and punishment.",
+  "Trained police can distinguish between truths and lies at high levels of accuracy.",
+  "Sleep deprivation affects decision making and makes a suspect vulnerable to influence.",
+  "Explicit promises of leniency or immunity during interrogation can lead a person to confess to a crime that they did not commit.",
+  "Police officer expressions of sympathy and moral justification for a crime can lead a suspect to believe that the police will be lenient with them when they confess to a crime.",
+  "In decision making, people are influenced more by immediate outcomes than by longer term consequences.",
+  "Misinformation about an event can change a person's memory for that event.",
+  "Individuals who have intellectual disabilities are particularly vulnerable to the pressures of police.",
+  "Observers tend to underestimate the effects of situational factors on the behaviour of other people.",
+  "An average adult cannot be induced into giving a false confession.",
+  "Individuals with compliant or suggestible personalities are particularly vulnerable to influence during an interrogation.",
+  "Compared to adults, adolescents are more likely to give false confessions.",
+  "Authority figures can produce illicit acts of obedience from people through a step-by-step process of gradual escalation.",
+  "People can be trained to distinguish between truths and lies at high levels of accuracy by observing nonverbal symptoms of anxiety.",
+  "People can be trained to distinguish between truths and lies at high levels of accuracy by learning how to detect micro-expressions in the face."
+)
+
+# Calculate means and SDs for Q1_1 to Q1_19
+q1_results <- data.frame(
+  Question = paste0("Q1_", 1:19),
+  Statement = kassin_statements
+)
+
+# Placeholder for Q1 calculations
+for(i in 1:19) {
+  col_name <- paste0("Q1_", i)
+  if(col_name %in% colnames(FC_Panel_Data)) {
+    # Extract numeric values and remove NAs for calculations
+    numeric_values <- extract_numeric(FC_Panel_Data[[col_name]])
+    numeric_values <- numeric_values[!is.na(numeric_values)]
+
+    # Only calculate if we have valid numeric values
+    if(length(numeric_values) > 0) {
+      q1_results$Mean[i] <- round(mean(numeric_values, na.rm = TRUE), 2)
+      q1_results$SD[i] <- round(sd(numeric_values, na.rm = TRUE), 2)
+      q1_results$N[i] <- length(numeric_values)
+    } else {
+      q1_results$Mean[i] <- NA
+      q1_results$SD[i] <- NA
+      q1_results$N[i] <- 0
+    }
+  } else {
+    q1_results$Mean[i] <- NA
+    q1_results$SD[i] <- NA
+    q1_results$N[i] <- NA
+  }
+}
+
+# Calculate means and SDs for Q2_1 to Q2_19
+q2_results <- data.frame(
+  Question = paste0("Q2_", 1:19),
+  Statement = kassin_statements  # Assuming the statements are the same
+)
+
+# Placeholder for Q2 calculations
+for(i in 1:19) {
+  col_name <- paste0("Q2_", i)
+  if(col_name %in% colnames(FC_Panel_Data)) {
+    # Extract numeric values and remove NAs for calculations
+    numeric_values <- extract_numeric(FC_Panel_Data[[col_name]])
+    numeric_values <- numeric_values[!is.na(numeric_values)]
+
+    # Only calculate if we have valid numeric values
+    if(length(numeric_values) > 0) {
+      q2_results$Mean[i] <- round(mean(numeric_values, na.rm = TRUE), 2)
+      q2_results$SD[i] <- round(sd(numeric_values, na.rm = TRUE), 2)
+      q2_results$N[i] <- length(numeric_values)
+    } else {
+      q2_results$Mean[i] <- NA
+      q2_results$SD[i] <- NA
+      q2_results$N[i] <- 0
+    }
+  } else {
+    q2_results$Mean[i] <- NA
+    q2_results$SD[i] <- NA
+    q2_results$N[i] <- NA
+  }
+}
+
+# Combine both tables if needed
+all_results <- rbind(q1_results, q2_results)
+
+# Add a note about the scale to the table output
+scale_note <- "Scale: 1 = Do not agree at all; 7 = Completely agree"
+
+# Create an APA-style table using flextable (more reliable than papaja for installation)
+if(require(flextable) && require(officer)) {
+  # Format data for APA table
+  apa_table_data <- all_results %>%
+    select(Statement, Mean, SD, N)
+
+  # Create flextable with APA styling
+  ft <- flextable(apa_table_data) %>%
+    set_header_labels(
+      Statement = "Statement",
+      Mean = "M",
+      SD = "SD",
+      N = "n"
+    ) %>%
+    italic(j = c("Mean", "SD", "N"), part = "header") %>%
+    align(j = 1, align = "left", part = "all") %>%
+    align(j = 2:4, align = "right", part = "all") %>%
+    add_footer_lines(scale_note) %>%
+    set_caption("Table 1. Means and Standard Deviations for Kassin Statements") %>%
+    font(fontname = "Times New Roman", part = "all") %>%
+    fontsize(size = 12, part = "all") %>%
+    line_spacing(space = 1.5) %>%
+    border_remove() %>%
+    hline_top(part = "header", border = fp_border(width = 0.5)) %>%
+    hline_bottom(part = "header", border = fp_border(width = 0.5)) %>%
+    hline_bottom(part = "body", border = fp_border(width = 0.5)) %>%
+    padding(padding = 5, part = "all") %>%
+    autofit()
+
+  # Print the table to console
+  print(ft)
+
+  # Save as Word document
+  save_as_docx(ft, path = "kassin_apa_table.docx")
+}
+print(kable(q1_results[, c("Statement", "Mean", "SD", "N")],
+            format = "simple",
+            caption = "Means and Standard Deviations for First Set of Kassin Statements"))
+
+cat("\n\n")
+
+print(kable(q2_results[, c("Statement", "Mean", "SD", "N")],
+            format = "simple",
+            caption = "Means and Standard Deviations for Second Set of Kassin Statements"))
+
+# Alternative approach: Create a formatted table using kable and kableExtra with APA styling
+cat("\nTable: Means and Standard Deviations for Kassin Statements\n")
+cat(scale_note, "\n\n")
+
+if(require(kableExtra)) {
+  # Create an APA-styled table with kableExtra
+  apa_styled_table <- kable(all_results[, c("Statement", "Mean", "SD", "N")],
+                            format = "html",
+                            caption = "Table 1. Means and Standard Deviations for Kassin Statements",
+                            col.names = c("Statement", "*M*", "*SD*", "*n*"),
+                            align = c("l", "r", "r", "r")) %>%
+    kable_styling(bootstrap_options = c("striped", "hover"),
+                  full_width = FALSE) %>%
+    row_spec(0, bold = TRUE) %>%
+    footnote(general = scale_note,
+              general_title = "",
+              footnote_as_chunk = TRUE,
+              escape = FALSE) %>%
+    add_header_above(c(" " = 1, "Statistics" = 3))
+
+  # Save the table as an HTML file that could be imported into Word
+  write_file <- function(x) {cat(x, file = "Leo_&_Liu_apa_styled_table.html")}
+  write_file(as.character(apa_styled_table))
+
+  # Print the table
+  print(apa_styled_table)
+}
+
+# For use with APA articles, here's how to create a CSV that can be imported into Word
+write.csv(all_results[, c("Statement", "Mean", "SD", "N")], "Kassin_Panel_results.csv", row.names = FALSE)
+
+# If you want to recreate exactly the format from your example tables,
+# you could add columns for the Kassin et al. (2018) corresponding statements
+# and the Common Sense percentages if you have that data available
+
+```
+
+```{r}
+#| label: Leo & Liu Panel Data
+
+# R Script to create APA-formatted tables for Leo's Interrogation Tactics data
+# from FC_Panel_Data dataset (Q3 - Coerciveness, Q4 - True Confession, Q5 - False Confession)
+
+# Load required packages
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(tidyr)
+if (!require(flextable)) install.packages("flextable"); library(flextable)
+if (!require(officer)) install.packages("officer"); library(officer)
+
+# Function to extract numeric values from responses
+extract_numeric <- function(x) {
+  if (is.numeric(x)) return(x)
+  if (is.factor(x) || is.character(x)) {
+    nums <- as.numeric(gsub("([0-9]+).*", "\\1", x))
+    return(nums)
+  }
+  return(NA)
+}
+
+# Create result data frames
+coerciveness_results <- data.frame(Question = paste0("Q3 - Coerciveness_", 1:18),
+                                   Statement = rep(NA, 18), Mean = NA, SD = NA, N = NA)
+
+true_confession_results <- data.frame(Question = paste0("Q4 - True Confession_", 1:18),
+                                      Statement = rep(NA, 18), Mean = NA, SD = NA, N = NA)
+
+false_confession_results <- data.frame(Question = paste0("Q5 False Confess._", 1:18),
+                                       Statement = rep(NA, 18), Mean = NA, SD = NA, N = NA)
+
+# Statements for all tactics
+leo_liu_statements <- c(
+  "Repeatedly accusing a suspect.",
+  "Asking the suspect to take a lie detector test.",
+  "Repeatedly telling the suspect his or her alibi is false.",
+  "Repeatedly cutting off suspect's denial of guilt.",
+  "Giving a lie detector test and truthfully telling suspect results are inconclusive.",
+  "Giving a lie detector test and truthfully telling suspect results show he or she is lying.",
+  "Confronting suspect with incriminating false surveillance camera evidence.",
+  "Confronting suspect with incriminating false DNA evidence.",
+  "Confronting suspect with incriminating false fingerprint evidence.",
+  "Giving a lie detector test and falsely telling suspect results show he or she is lying.",
+  "Implicitly suggesting suspect will receive a lenient charge for confession.",
+  "Explicitly promising suspect a lenient charge for confession.",
+  "Implicitly suggesting suspect will receive a lenient sentence for confession.",
+  "Explicitly promising a suspect a lenient sentence for confession.",
+  "Implicitly threatening the suspect with physical harm if no confession.",
+  "Explicitly threatening the suspect with physical harm if no confession.",
+  "Threatening the suspect with violence if no confession.",
+  "Beating or assaulting the suspect."
+)
+
+# Helper function to fill a results data frame
+fill_results <- function(df, question_prefix, statements, data) {
+  for (i in 1:18) {
+    col_name <- paste0(question_prefix, i)
+    df$Statement[i] <- statements[i]
+    if (col_name %in% colnames(data)) {
+      values <- extract_numeric(data[[col_name]])
+      values <- values[!is.na(values)]
+      df$Mean[i] <- ifelse(length(values) > 0, round(mean(values), 2), NA)
+      df$SD[i]   <- ifelse(length(values) > 0, round(sd(values), 2), NA)
+      df$N[i]    <- length(values)
+    }
+  }
+  return(df)
+}
+
+# Populate result tables
+coerciveness_results <- fill_results(coerciveness_results, "Q3 - Coerciveness_", leo_liu_statements, FC_Panel_Data)
+true_confession_results <- fill_results(true_confession_results, "Q4 - True Confession_", leo_liu_statements, FC_Panel_Data)
+false_confession_results <- fill_results(false_confession_results, "Q5 False Confess._", leo_liu_statements, FC_Panel_Data)
+
+# Create grouped table (optional)
+grouped_by_statement <- data.frame(
+  Statement = leo_liu_statements,
+  Coerciveness_Mean = coerciveness_results$Mean,
+  Coerciveness_SD = coerciveness_results$SD,
+  True_Confession_Mean = true_confession_results$Mean,
+  True_Confession_SD = true_confession_results$SD,
+  False_Confession_Mean = false_confession_results$Mean,
+  False_Confession_SD = false_confession_results$SD
+)
+
+# Scale notes
+coerciveness_note <- "Scale: 1 = Not coercive at all; 5 = Extremely coercive"
+true_confession_note <- "Scale: 1 = Not at all likely; 5 = Extremely likely"
+false_confession_note <- "Scale: 1 = Not at all likely; 5 = Extremely likely"
+
+# Function to create APA table
+create_apa_flextable <- function(data, caption, footer_note, filename) {
+  ft <- flextable(data) %>%
+    set_header_labels(
+      Statement = "Interrogation Tactic",
+      Mean = "M", SD = "SD", N = "n"
+    ) %>%
+    italic(j = c("M", "SD", "n"), part = "header") %>%
+    align(j = 1, align = "left", part = "all") %>%
+    align(j = 2:4, align = "right", part = "all") %>%
+    add_footer_lines(footer_note) %>%
+    set_caption(caption) %>%
+    font(fontname = "Times New Roman", part = "all") %>%
+    fontsize(size = 12, part = "all") %>%
+    line_spacing(space = 1.5) %>%
+    border_remove() %>%
+    hline_top(part = "header", border = fp_border(width = 0.5)) %>%
+    hline_bottom(part = "header", border = fp_border(width = 0.5)) %>%
+    hline_bottom(part = "body", border = fp_border(width = 0.5)) %>%
+    padding(padding = 5, part = "all") %>%
+    autofit()
+  
+  print(ft)
+  save_as_docx(ft, path = filename)
+}
+
+# Create and save each table
+create_apa_flextable(
+  coerciveness_results %>%
+    select(Statement, Mean, SD, N) %>%
+    rename(M = Mean, n = N),
+  caption = "Table 1. Perceived Coerciveness of Interrogation Tactics",
+  footer_note = coerciveness_note,
+  filename = "leo_liu_coerciveness_apa_table.docx"
+)
+
+create_apa_flextable(
+  true_confession_results %>%
+    select(Statement, Mean, SD, N) %>%
+    rename(M = Mean, n = N),
+  caption = "Table 2. Perceived Likelihood of Techniques Leading to True Confessions",
+  footer_note = true_confession_note,
+  filename = "leo_liu_true_confession_apa_table.docx"
+)
+
+library(dplyr)
+library(stringr)
+library(tidyr)
+
+false_confess_vars <- c(
+  "Q5 - False Confess._1", "Q5 - False Confess._2", "Q5 - False Confess._3",
+  "Q5 - False Confess._4", "Q5 - False Confess._5", "Q5 - False Confess._6",
+  "Q5 - False Confess._7", "Q5 - False Confess._8", "Q5 - False Confess._9",
+  "Q5 - False Confess._10", "Q5 - False Confess._11", "Q5 - False Confess._12",
+  "Q5 - False Confess._13", "Q5 - False Confess._14", "Q5 - False Confess._15",
+  "Q5 - False Confess._16", "Q5 - False Confess._17", "Q5 - False Confess._18"
+)
+
+# Select and clean the false confession columns
+false_confess_data <- FC_Panel_Data %>%
+  select(all_of(false_confess_vars)) %>%
+  mutate(across(everything(), ~ as.numeric(str_extract(., "\\d+(\\.\\d+)?"))))
+
+# Pivot longer and summarize
+false_confession_results <- false_confess_data %>%
+  pivot_longer(cols = everything(), names_to = "Statement", values_to = "Response") %>%
+  group_by(Statement) %>%
+  summarise(
+    Mean = mean(Response, na.rm = TRUE),
+    SD = sd(Response, na.rm = TRUE),
+    N = sum(!is.na(Response))
+  ) %>%
+  arrange(Statement)
+
+false_confession_results
+
+# Suppose your false_confession_results has columns: Statement, Mean, SD, N
+# Rename Mean → M, N → n for compatibility
+false_confession_results_fixed <- false_confession_results %>%
+  rename(
+    M = Mean,
+    n = N
+  )
+
+# Replace the Statement column in the false confession results
+false_confession_results_fixed$Statement <- leo_liu_statements
+
+false_confession_results_fixed <- false_confession_results_fixed %>%
+  mutate(
+    M = round(M, 2),
+    SD = round(SD, 2)
+  )
+
+# Then create the APA table
+create_apa_flextable(
+  false_confession_results_fixed %>% select(Statement, M, SD, n),
+  caption = "Table 3. Perceived Likelihood of Techniques Leading to False Confessions",
+  footer_note = false_confession_note,
+  filename = "leo_liu_false_confession_apa_table.docx"
+)
 ```
 
 
