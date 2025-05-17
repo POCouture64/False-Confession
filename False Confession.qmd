@@ -1202,7 +1202,7 @@ View(FC_Combined)
 ```
 
 ```{r}
-#| label: Kassin Combined Data Tables
+#| label: Kassin COMBINED Data Tables
 
 # R Script to create a table of means and standard deviations 
 # for Kassin et al. (2018) questions from FC_Combined dataset
@@ -1380,6 +1380,209 @@ write.csv(all_results[, c("Statement", "Mean", "SD", "N")], "Kassin_COMBINED.csv
 
 ```
 
+```{r}
+#| label: Leo & Liu COMBINED Data
+
+# R Script to create APA-formatted tables for Leo's Interrogation Tactics data
+# using FC_Combined dataset (Q3 - Coerciveness, Q4 - True Confession, Q5 - False Confession)
+
+# Load required libraries
+library(dplyr)
+library(knitr)
+library(kableExtra)
+library(tidyr)
+if (!require(flextable)) { install.packages("flextable"); library(flextable) }
+if (!require(officer)) { install.packages("officer"); library(officer) }
+
+# Function to extract numeric from possibly non-numeric columns
+extract_numeric <- function(x) {
+  if (is.numeric(x)) return(x)
+  if (is.factor(x) || is.character(x)) {
+    nums <- as.numeric(gsub("([0-9]+).*", "\\1", x))
+    return(nums)
+  }
+  return(NA)
+}
+
+# Prepare empty result frames
+coerciveness_results <- data.frame(
+  Question = paste0("Q3 - Coerciveness_", 1:18),
+  Statement = rep(NA, 18),
+  Mean = rep(NA, 18),
+  SD = rep(NA, 18),
+  N = rep(NA, 18)
+)
+
+true_confession_results <- data.frame(
+  Question = paste0("Q4 - True Confession_", 1:18),
+  Statement = rep(NA, 18),
+  Mean = rep(NA, 18),
+  SD = rep(NA, 18),
+  N = rep(NA, 18)
+)
+
+false_confession_results <- data.frame(
+  Question = paste0("Q5 - False Confess._", 1:18),
+  Statement = rep(NA, 18),
+  Mean = rep(NA, 18),
+  SD = rep(NA, 18),
+  N = rep(NA, 18)
+)
+
+leo_liu_statements <- c(
+  "Repeatedly accusing a suspect.",
+  "Asking the suspect to take a lie detector test.",
+  "Repeatedly telling the suspect his or her alibi is false.",
+  "Repeatedly cutting off suspect's denial of guilt.",
+  "Giving a lie detector test and truthfully telling suspect results are inconclusive.",
+  "Giving a lie detector test and truthfully telling suspect results show he or she is lying.",
+  "Confronting suspect with incriminating false surveillance camera evidence.",
+  "Confronting suspect with incriminating false DNA evidence.",
+  "Confronting suspect with incriminating false fingerprint evidence.",
+  "Giving a lie detector test and falsely telling suspect results show he or she is lying.",
+  "Implicitly suggesting suspect will receive a lenient charge for confession.",
+  "Explicitly promising suspect a lenient charge for confession.",
+  "Implicitly suggesting suspect will receive a lenient sentence for confession.",
+  "Explicitly promising a suspect a lenient sentence for confession.",
+  "Implicitly threatening the suspect with physical harm if no confession.",
+  "Explicitly threatening the suspect with physical harm if no confession.",
+  "Threatening the suspect with violence if no confession.",
+  "Beating or assaulting the suspect."
+)
+
+# Fill in statistics
+for (i in 1:18) {
+  col_name <- paste0("Q3 - Coerciveness_", i)
+  coerciveness_results$Statement[i] <- leo_liu_statements[i]
+  if (col_name %in% colnames(FC_Combined)) {
+    numeric_values <- extract_numeric(FC_Combined[[col_name]])
+    numeric_values <- numeric_values[!is.na(numeric_values)]
+    coerciveness_results$Mean[i] <- round(mean(numeric_values), 2)
+    coerciveness_results$SD[i] <- round(sd(numeric_values), 2)
+    coerciveness_results$N[i] <- length(numeric_values)
+  }
+}
+
+for (i in 1:18) {
+  col_name <- paste0("Q4 - True Confession_", i)
+  true_confession_results$Statement[i] <- leo_liu_statements[i]
+  if (col_name %in% colnames(FC_Combined)) {
+    numeric_values <- extract_numeric(FC_Combined[[col_name]])
+    numeric_values <- numeric_values[!is.na(numeric_values)]
+    true_confession_results$Mean[i] <- round(mean(numeric_values), 2)
+    true_confession_results$SD[i] <- round(sd(numeric_values), 2)
+    true_confession_results$N[i] <- length(numeric_values)
+  }
+}
+
+for (i in 1:18) {
+  col_name <- paste0("Q5 - False Confess._", i)
+  false_confession_results$Statement[i] <- leo_liu_statements[i]
+  if (col_name %in% colnames(FC_Combined)) {
+    numeric_values <- extract_numeric(FC_Combined[[col_name]])
+    numeric_values <- numeric_values[!is.na(numeric_values)]
+    false_confession_results$Mean[i] <- round(mean(numeric_values), 2)
+    false_confession_results$SD[i] <- round(sd(numeric_values), 2)
+    false_confession_results$N[i] <- length(numeric_values)
+  }
+}
+
+# Combine all results
+all_leo_liu_results <- bind_rows(
+  coerciveness_results,
+  true_confession_results,
+  false_confession_results
+) %>%
+  mutate(Category = rep(c("Coerciveness", "True Confession", "False Confession"), each = 18))
+
+# Prepare grouped summary
+grouped_by_statement <- data.frame(
+  Statement = leo_liu_statements,
+  Coerciveness_Mean = coerciveness_results$Mean,
+  Coerciveness_SD = coerciveness_results$SD,
+  True_Confession_Mean = true_confession_results$Mean,
+  True_Confession_SD = true_confession_results$SD,
+  False_Confession_Mean = false_confession_results$Mean,
+  False_Confession_SD = false_confession_results$SD
+)
+
+# Notes for footer
+coerciveness_scale_note <- "Scale: 1 = Not coercive at all; 5 = Extremely coercive"
+true_confession_scale_note <- "Scale: 1 = Not at all likely; 5 = Extremely likely"
+false_confession_scale_note <- "Scale: 1 = Not at all likely; 5 = Extremely likely"
+
+# Create and export APA-style tables
+doc <- read_docx()
+doc <- body_add_par(doc, "Table 1: Perceived Coerciveness of Leo's Interrogation Tactics", style = "heading 2")
+doc <- body_add_flextable(doc, flextable(coerciveness_results %>% select(Statement, Mean, SD, N)) %>%
+                            set_header_labels(Statement = "Interrogation Tactic", Mean = "M", SD = "SD", N = "n") %>%
+                            italic(j = 2:4, part = "header") %>%
+                            align(j = 1, align = "left") %>%
+                            autofit() %>%
+                            add_footer_lines(coerciveness_scale_note))
+doc <- body_add_par(doc, "")
+doc <- body_add_par(doc, "Table 2: Likelihood of True Confession", style = "heading 2")
+doc <- body_add_flextable(doc, flextable(true_confession_results %>% select(Statement, Mean, SD, N)) %>%
+                            set_header_labels(Statement = "Interrogation Tactic", Mean = "M", SD = "SD", N = "n") %>%
+                            italic(j = 2:4, part = "header") %>%
+                            align(j = 1, align = "left") %>%
+                            autofit() %>%
+                            add_footer_lines(true_confession_scale_note))
+doc <- body_add_par(doc, "")
+doc <- body_add_par(doc, "Table 3: Likelihood of False Confession", style = "heading 2")
+doc <- body_add_flextable(doc, flextable(false_confession_results %>% select(Statement, Mean, SD, N)) %>%
+                            set_header_labels(Statement = "Interrogation Tactic", Mean = "M", SD = "SD", N = "n") %>%
+                            italic(j = 2:4, part = "header") %>%
+                            align(j = 1, align = "left") %>%
+                            autofit() %>%
+                            add_footer_lines(false_confession_scale_note))
+print(doc, target = "Leo_Interrogation_Tactics_COMBINED_APA_Tables.docx")
+
+# Create combined table
+leo_table_data <- data.frame(
+  Tactic = leo_liu_statements,
+  Coerciveness = paste0(coerciveness_results$Mean, " (", coerciveness_results$SD, ")"),
+  TrueConfession = paste0(true_confession_results$Mean, " (", true_confession_results$SD, ")"),
+  FalseConfession = paste0(false_confession_results$Mean, " (", false_confession_results$SD, ")")
+)
+
+leo_ft <- flextable(leo_table_data) %>%
+  set_header_labels(
+    Tactic = "Interrogation Tactic",
+    Coerciveness = "Coerciveness",
+    TrueConfession = "Likelihood of Eliciting a True Confession",
+    FalseConfession = "Likelihood of Eliciting a False Confession"
+  ) %>%
+  add_header_row(values = c("", "Mean (SD)", "Mean (SD)", "Mean (SD)"), colwidths = c(1, 1, 1, 1)) %>%
+  compose(i = 1, j = 2, value = as_paragraph(leo_table_data$Coerciveness[1], as_sup("a"))) %>%
+  compose(i = 1, j = 3, value = as_paragraph(leo_table_data$TrueConfession[1], as_sup("b"))) %>%
+  compose(i = 1, j = 4, value = as_paragraph(leo_table_data$FalseConfession[1], as_sup("c"))) %>%
+  font(fontname = "Times New Roman", part = "all") %>%
+  fontsize(size = 12, part = "all") %>%
+  line_spacing(space = 1.5) %>%
+  border_remove() %>%
+  padding(padding = 5, part = "all") %>%
+  autofit() %>%
+  set_caption("Table X. Mean scores and standard deviations for interrogation tactics on coerciveness and likelihood of eliciting true or false confessions.") %>%
+  add_footer_lines(c(coerciveness_scale_note, true_confession_scale_note, false_confession_scale_note))
+
+print(leo_ft)
+save_as_docx(leo_ft, path = "leo_interrogation_tactics_COMBINED_combined_table.docx")
+
+# Save all tables to one doc
+doc <- read_docx()
+doc <- body_add_par(doc, "Table 1: Perceived Coerciveness", style = "heading 2")
+doc <- body_add_flextable(doc, flextable(coerciveness_results %>% select(Statement, Mean, SD, N)))
+doc <- body_add_par(doc, "Table 2: Likelihood of True Confession", style = "heading 2")
+doc <- body_add_flextable(doc, flextable(true_confession_results %>% select(Statement, Mean, SD, N)))
+doc <- body_add_par(doc, "Table 3: Likelihood of False Confession", style = "heading 2")
+doc <- body_add_flextable(doc, flextable(false_confession_results %>% select(Statement, Mean, SD, N)))
+doc <- body_add_par(doc, "Table 4: Combined Comparison Table", style = "heading 2")
+doc <- body_add_flextable(doc, leo_ft)
+print(doc, target = "leo_interrogation_tactics_COMBINED_all_tables.docx")
+
+
+```
 
 
 
