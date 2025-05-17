@@ -1584,6 +1584,13 @@ print(doc, target = "leo_interrogation_tactics_COMBINED_all_tables.docx")
 
 ```
 
+## Comparison
+
+This is the code I will use to compare the student and panel data between the 2017 and 2024 data. I will also compare the combined dataset from 2017 to 2014 data. 
+
+```{r}
+#| label: 
+```
 
 
 The `echo: false` option disables the printing of code (only output is displayed).
