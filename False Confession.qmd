@@ -233,7 +233,7 @@ if(require(kableExtra)) {
     add_header_above(c(" " = 1, "Statistics" = 3))
   
   # Save the table as an HTML file that could be imported into Word
-write_file <- function(x) {cat(x, file = "Leo_&_Liu_apa_styled_table.html")}
+write_file <- function(x) {cat(x, file = "Kassin_Student.html")}
 write_file(as.character(apa_styled_table))
   
   # Print the table
@@ -241,7 +241,7 @@ write_file(as.character(apa_styled_table))
 }
 
 # For use with APA articles, here's how to create a CSV that can be imported into Word
-write.csv(all_results[, c("Statement", "Mean", "SD", "N")], "Leo_&_Liu_results.csv", row.names = FALSE)
+write.csv(all_results[, c("Statement", "Mean", "SD", "N")], "Kassin_Student.csv", row.names = FALSE)
 
 # If you want to recreate exactly the format from your example tables,
 # you could add columns for the Kassin et al. (2018) corresponding statements
@@ -654,7 +654,7 @@ FC_Panel_Data <- FC_Panel_Data[-c(1:2), -c(1:19)]
 ```
 
 ```{r}
-#| label: Kassin et al., 2018 Panel Data
+#| label: Kassin Panel Data
 
 # R Script to create a table of means and standard deviations
 # for Kassin et al. (2018) questions from FC_Panel_Data dataset
@@ -1369,13 +1369,13 @@ if(require(kableExtra)) {
              escape = FALSE) %>%
     add_header_above(c(" " = 1, "Statistics" = 3))
 
-  write_file <- function(x) {cat(x, file = "Leo_&_Liu_apa_styled_table.html")}
+  write_file <- function(x) {cat(x, file = "KASSIN_COMBINED.html")}
   write_file(as.character(apa_styled_table))
   
   print(apa_styled_table)
 }
 
-write.csv(all_results[, c("Statement", "Mean", "SD", "N")], "Leo_&_Liu_results.csv", row.names = FALSE)
+write.csv(all_results[, c("Statement", "Mean", "SD", "N")], "Kassin_COMBINED.csv", row.names = FALSE)
 
 
 ```
